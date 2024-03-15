@@ -28,10 +28,6 @@ Usage of app:
 |-------|--------------|
 | 1m34s | 11m54s       |
 
-## todo
-
-- [ ] 下载封面
-
 ## 鸣谢
 
 - aes 加解密参考 https://github.com/hcjohn463/JableTVDownload

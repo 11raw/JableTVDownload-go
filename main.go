@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"context"
 	"flag"
-	"fmt"
 	"github.com/schollz/progressbar/v3"
 	"log"
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -18,18 +18,26 @@ var concurrentDownloadNum = flag.Int64("c", 5, "concurrent download num range 0-
 func main() {
 	flag.Parse()
 	if *videoUrl == "" {
-		fmt.Println("empty url")
+		log.Println("empty url")
 		return
 	}
 	if *concurrentDownloadNum <= 0 || *concurrentDownloadNum > 30 {
-		fmt.Println("error set")
+		log.Println("error set")
 		return
 	}
-	fmt.Println("video_url ", *videoUrl)
-	fmt.Println("concurrent download num ", *concurrentDownloadNum)
+	log.Println("video_url ", *videoUrl)
+	log.Println("concurrent download num ", *concurrentDownloadNum)
 
-	fmt.Println("getting playlist...")
-	m3u8Url := mustGetM3u8Url(*videoUrl)
+	log.Println("getting playlist...")
+	// make dir
+	folderPath := path.Base(*videoUrl)
+	videoPath := path.Join(folderPath, folderPath+".mp4")
+	err := os.Mkdir(folderPath, 0755)
+	if err != nil {
+		log.Fatal("Error creating folder:", err)
+	}
+
+	m3u8Url := mustGetM3u8Url(*videoUrl, folderPath)
 	m3u8UrlDir := strings.Replace(m3u8Url, path.Base(m3u8Url), "", 1)
 
 	m3u8Media := mustDownloadM3u8(m3u8Url)
@@ -86,7 +94,7 @@ func main() {
 
 	// 拼接视频
 	waiter.Wait()
-	fmt.Println("merging videos...")
+	log.Println("merging videos...")
 
 	var TsFileList []bytes.Buffer
 	for i := 0; i < total; i++ {
@@ -97,18 +105,16 @@ func main() {
 		}
 	}
 
-	path.Base(*videoUrl)
-	outMp4 := path.Base(*videoUrl) + ".mp4"
 	m := MergeTsFileListToSingleMp4_Req{
 		TsFileList: TsFileList,
-		OutputMp4:  outMp4,
+		OutputMp4:  videoPath,
 		Ctx:        context.Background(),
 	}
 
-	err := MergeTsFileListToSingleMp4(m)
+	err = MergeTsFileListToSingleMp4(m)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println("downloaded ", outMp4, " !")
+	log.Println("downloaded ", videoPath, " !")
 }
