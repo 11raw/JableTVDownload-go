@@ -21,7 +21,12 @@ var reg = regexp.MustCompile("https:\\/\\/[^\\\"\\s]+\\.m3u8")
 
 // mustGetM3u8Url 获取 m3u8 链接
 func mustGetM3u8Url(link, folderPath string) string {
-	u := launcher.New().Bin("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome").MustLaunch()
+	browserPath, exist := launcher.LookPath()
+	if !exist {
+		log.Fatal("can't find your browser!\n" +
+			"detail:https://github.com/go-rod/rod/blob/main/lib/launcher/browser.go#L202")
+	}
+	u := launcher.New().Bin(browserPath).MustLaunch()
 	browser := rod.New().ControlURL(u).MustConnect()
 
 	pageResponse := browser.MustPage(link).MustWaitStable()

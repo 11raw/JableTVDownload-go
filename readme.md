@@ -12,9 +12,9 @@ Usage of app:
         input your url
 ```
 
-## 原理
+## 特性
 
-- rod 无头浏览器 (soap.go 配置浏览器地址)
+- rod 无头浏览器
 - 不使用 ffmpeg
 - 使用 gomedia 处理视频
 
