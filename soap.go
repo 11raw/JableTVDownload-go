@@ -23,7 +23,7 @@ var reg = regexp.MustCompile("https:\\/\\/[^\\\"\\s]+\\.m3u8")
 func mustGetM3u8Url(link, folderPath string) string {
 	browserPath, exist := launcher.LookPath()
 	if !exist {
-		log.Fatal("can't find your browser!\n" +
+		log.Panicln("can't find your browser!\n" +
 			"detail:https://github.com/go-rod/rod/blob/main/lib/launcher/browser.go#L202")
 	}
 	u := launcher.New().Bin(browserPath).MustLaunch()
@@ -33,7 +33,7 @@ func mustGetM3u8Url(link, folderPath string) string {
 	h5 := pageResponse.MustHTML()
 	rawSearch := reg.Find([]byte(h5))
 	if len(rawSearch) == 0 {
-		log.Fatal("no m3u8 url")
+		log.Panicln("no m3u8 url")
 	}
 
 	browser.MustClose()
@@ -46,18 +46,18 @@ func mustGetM3u8Url(link, folderPath string) string {
 func mustDownloadM3u8(link string) *m3u8.MediaPlaylist {
 	response, err := http.Get(link)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	defer func() { _ = response.Body.Close() }()
 
 	playlist, _, err := m3u8.DecodeFrom(bufio.NewReader(response.Body), true)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	media, exist := playlist.(*m3u8.MediaPlaylist)
 	if !exist {
-		log.Fatal("error m3u8")
+		log.Panicln("error m3u8")
 	}
 
 	return media
@@ -66,7 +66,7 @@ func mustDownloadM3u8(link string) *m3u8.MediaPlaylist {
 func mustGetDecryptKey(tsUrl string) []byte {
 	response, err := http.Get(tsUrl)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	defer func() { _ = response.Body.Close() }()
 	readAll, _ := io.ReadAll(response.Body)
@@ -77,14 +77,14 @@ func mustGetDecryptKey(tsUrl string) []byte {
 func download(link string) []byte {
 	req, err := http.NewRequest(http.MethodGet, link, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 
 	req.Close = true
 
 	response, err := client.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln(err)
 	}
 	defer func() { _ = response.Body.Close() }()
 
@@ -96,7 +96,7 @@ func download(link string) []byte {
 func getCover(htmlFile io.Reader, coverPath string) {
 	doc, err := goquery.NewDocumentFromReader(htmlFile)
 	if err != nil {
-		log.Fatal("Error parsing HTML:", err)
+		log.Panicln("Error parsing HTML:", err)
 	}
 
 	doc.Find("meta").Each(func(i int, s *goquery.Selection) {
@@ -104,12 +104,12 @@ func getCover(htmlFile io.Reader, coverPath string) {
 		if metaContent != "" && strings.Contains(metaContent, "preview.jpg") {
 			resp, err := http.Get(metaContent)
 			if err != nil {
-				log.Fatal("Error downloading cover:", err)
+				log.Panicln("Error downloading cover:", err)
 			}
 			defer func() { _ = resp.Body.Close() }()
 			readAll, _ := io.ReadAll(resp.Body)
 			if err = os.WriteFile(coverPath, readAll, 0755); err != nil {
-				log.Fatal("Error writing cover:", err)
+				log.Panicln("Error writing cover:", err)
 			}
 
 			log.Printf("Cover downloaded as %s\n", coverPath)

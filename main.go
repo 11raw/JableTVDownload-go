@@ -16,25 +16,31 @@ var videoUrl = flag.String("u", "", "input your url")
 var concurrentDownloadNum = flag.Int64("c", 5, "concurrent download num range 0-30")
 
 func main() {
+	defer func() {
+		r := recover()
+		if r != nil {
+			log.Printf("Fatal panic: %v", r)
+			os.Exit(1)
+		}
+	}()
+
 	flag.Parse()
 	if *videoUrl == "" {
-		log.Println("empty url")
-		return
+		log.Panicln("empty url")
 	}
 	if *concurrentDownloadNum <= 0 || *concurrentDownloadNum > 30 {
-		log.Println("error set")
-		return
+		log.Panicln("error set")
 	}
 	log.Println("video_url ", *videoUrl)
 	log.Println("concurrent download num ", *concurrentDownloadNum)
 
-	log.Println("getting playlist...")
+	log.Println("getting playlist and video cover...")
 	// make dir
 	folderPath := path.Base(*videoUrl)
 	videoPath := path.Join(folderPath, folderPath+".mp4")
 	err := os.Mkdir(folderPath, 0755)
 	if err != nil {
-		log.Fatal("Error creating folder:", err)
+		log.Panicln("Error creating folder:", err)
 	}
 
 	m3u8Url := mustGetM3u8Url(*videoUrl, folderPath)
@@ -55,7 +61,7 @@ func main() {
 	}
 
 	if len(segUriList) == 0 {
-		log.Fatal("segUriList empty")
+		log.Panicln("segUriList empty")
 	}
 
 	bar := progressbar.Default(int64(len(segUriList)))
@@ -81,7 +87,7 @@ func main() {
 
 			decrypted, err := decrypt(decryptKey, vt, segTsResponse)
 			if err != nil {
-				log.Fatal(err)
+				log.Panicln(err)
 			}
 			buf := bytes.Buffer{}
 			buf.Write(decrypted)
@@ -105,7 +111,7 @@ func main() {
 		}
 	}
 
-	m := MergeTsFileListToSingleMp4_Req{
+	m := MergeTsFileListToSingleMp4Req{
 		TsFileList: TsFileList,
 		OutputMp4:  videoPath,
 		Ctx:        context.Background(),
@@ -113,7 +119,7 @@ func main() {
 
 	err = MergeTsFileListToSingleMp4(m)
 	if err != nil {
-		log.Fatal(err)
+		log.Panicln("err merging:", err)
 	}
 
 	log.Println("downloaded ", videoPath, " !")

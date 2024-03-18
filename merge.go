@@ -12,19 +12,19 @@ import (
 	"strconv"
 )
 
-type MergeTsFileListToSingleMp4_Req struct {
+type MergeTsFileListToSingleMp4Req struct {
 	TsFileList []bytes.Buffer
 	OutputMp4  string
 	Status     *SpeedStatus
 	Ctx        context.Context
 }
 
-func MergeTsFileListToSingleMp4(req MergeTsFileListToSingleMp4_Req) (err error) {
-	mp4file, err := os.OpenFile(req.OutputMp4, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
+func MergeTsFileListToSingleMp4(req MergeTsFileListToSingleMp4Req) (err error) {
+	mp4file, err := os.Create(req.OutputMp4)
 	if err != nil {
 		return err
 	}
-	defer mp4file.Close()
+	defer func() { _ = mp4file.Close() }()
 
 	if req.Status != nil {
 		req.Status.SpeedResetBytes()
@@ -97,14 +97,11 @@ func MergeTsFileListToSingleMp4(req MergeTsFileListToSingleMp4_Req) (err error) 
 		_ = bar.Add(1)
 	}
 
-	err = muxer.WriteTrailer()
-	if err != nil {
+	if err = muxer.WriteTrailer(); err != nil {
 		return err
 	}
-	err = mp4file.Sync()
-	if err != nil {
-		return err
-	}
+
+	defer func() { _ = mp4file.Sync() }()
 	if req.Status != nil {
 		req.Status.DrawProgressBar(1, 1)
 	}
