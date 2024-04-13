@@ -19,10 +19,10 @@ func main() {
 	defer func() {
 		r := recover()
 		if r != nil {
-			log.Printf("Fatal panic: %v", r)
-			log.Println("cleaning file...")
-			_ = os.RemoveAll(path.Base(*videoUrl))
-			os.Exit(1)
+			log.Printf("panic: %v", r)
+			//log.Println("cleaning file...")
+			//_ = os.RemoveAll(path.Base(*videoUrl))
+			//os.Exit(1)
 		}
 	}()
 
